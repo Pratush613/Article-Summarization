@@ -3,7 +3,6 @@ transformers==4.24.0
 fpdf==1.7.2
 newspaper3k==0.2.8
 lxml==5.2.2
+torch==2.0.1
 lxml_html_clean
-torch==2.0.1  
-
 
