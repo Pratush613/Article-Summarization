@@ -136,31 +136,37 @@ if summary_type == "Summarization":
                     st.error(str(e))
 
     elif summary_type == "URL":
-        url = st.text_input("Enter URL to summarize:")
-        if st.button("Fetch and Summarize"):
-            if url and url.startswith(("http://", "https://")):
-                try:
-                    article = Article(url)
-                    article.download()
-                    article.parse()
-                    input_text = article.text
-                    query = input_text
-                    with st.spinner('Summarizing...'):
-                        pipe_out = pipe(query, max_length=max_length, min_length=min_length)
-                    summary = pipe_out[0]["summary_text"]
-                    st.write("Summary:")
-                    st.write(summary)
+    url = st.text_input("Enter URL to summarize:")
+    if st.button("Fetch and Summarize"):
+        if url and url.startswith(("http://", "https://")):
+            try:
+                article = Article(url)
+                st.write("Downloading article...")
+                article.download()
+                st.write("Parsing article...")
+                article.parse()
+                input_text = article.text
+                query = input_text
+                with st.spinner('Summarizing...'):
+                    pipe_out = pipe(query, max_length=max_length, min_length=min_length)
+                summary = pipe_out[0]["summary_text"]
+                st.write("Summary:")
+                st.write(summary)
 
-                    pdf_file = convert_to_pdf(summary)
-                    text_file = convert_to_text(summary)
-                    st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
-                    st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
+                pdf_file = convert_to_pdf(summary)
+                text_file = convert_to_text(summary)
+                st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
+                st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
 
-                except Exception as e:
-                    st.error("Error fetching or summarizing the article. It might be protected against scraping or is not valid. Please try another URL.")
-                    st.error(str(e))
-            else:
-                st.warning("Please enter a valid URL (starting with http:// or https://).")
+            except ArticleException as e:
+                st.error("Error fetching or summarizing the article. It might be protected against scraping or is not valid. Please try another URL.")
+                st.error(str(e))
+            except Exception as e:
+                st.error("An error occurred during summarization. Please try again later.")
+                st.error(str(e))
+        else:
+            st.warning("Please enter a valid URL (starting with http:// or https://).")
+
 
 if summary_type == "Translation":
     st.title("Text Translator")
