@@ -9,13 +9,6 @@ import sentencepiece
 class MyFPDF(FPDF, HTMLMixin):
     pass
 
-@st.cache_data
-def load_summarization_model():
-    return pipeline("summarization", model="t5-small")
-
-@st.cache_data
-def load_translation_model(model_name):
-    return pipeline("translation", model=model_name, framework="pt")
 
 # Function to convert text to PDF
 def convert_to_pdf(text):
