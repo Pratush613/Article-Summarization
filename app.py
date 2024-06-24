@@ -1,6 +1,6 @@
 import streamlit as st
 from transformers import pipeline
-from newspaper3k import Article
+from newspaper import Article
 from fpdf import FPDF, HTMLMixin
 import base64
 import sentencepiece
