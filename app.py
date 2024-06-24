@@ -3,6 +3,7 @@ from transformers import pipeline
 from newspaper import Article
 from fpdf import FPDF, HTMLMixin
 import base64
+import sentencepiece
 
 # Custom PDF class
 class MyFPDF(FPDF, HTMLMixin):
