@@ -135,6 +135,7 @@ if summary_type == "Summarization":
                     st.error(str(e))
 
     elif summary_type == "URL":
+        max_sequence_length = 512
         url = st.text_input("Enter URL to summarize:")
         if st.button("Fetch and Summarize"):
             if url and url.startswith(("http://", "https://")):
@@ -145,7 +146,8 @@ if summary_type == "Summarization":
                     st.write("Parsing article...")
                     article.parse()
                     input_text = article.text
-                    query = input_text + "\nTL;DR:\n"
+                    truncated_text = input_text[:max_sequence_length]
+                    query = truncated_text 
                     with st.spinner('Summarizing...'):
                         pipe_out = pipe(query, max_length=max_length, min_length=min_length,clean_up_tokenization_spaces=True)
                     summary = pipe_out[0]["summary_text"]
