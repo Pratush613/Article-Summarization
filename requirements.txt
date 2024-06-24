@@ -4,4 +4,8 @@ fpdf==1.7.2
 newspaper3k==0.2.8
 lxml==5.2.2
 torch==2.0.1
-lxml_html_clean
+altair==4.2.2
+click==8.0.0
+protobuf<4
+numpy<2
+lxml-html-clean==0.1.1
