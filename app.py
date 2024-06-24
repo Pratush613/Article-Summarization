@@ -1,16 +1,14 @@
-
 import streamlit as st
 from transformers import pipeline
 from newspaper import Article
 from fpdf import FPDF, HTMLMixin
 import base64
-import sentencepiece
-import lxml_html_clean as clean
 
-
+# Custom PDF class
 class MyFPDF(FPDF, HTMLMixin):
     pass
 
+# Function to convert text to PDF
 def convert_to_pdf(text):
     pdf = MyFPDF()
     pdf.add_page()
@@ -25,12 +23,14 @@ def convert_to_pdf(text):
     pdf.output(pdf_output)
     return pdf_output
 
+# Function to convert text to text file
 def convert_to_text(text):
     text_file = "output.txt"
     with open(text_file, "w", encoding='utf-8') as file:
         file.write(text)
     return text_file
 
+# Function to generate download link for files
 def get_binary_file_downloader_html(bin_file, file_label):
     with open(bin_file, 'rb') as f:
         data = f.read()
@@ -38,6 +38,7 @@ def get_binary_file_downloader_html(bin_file, file_label):
     href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{bin_file}">Download {file_label}</a>'
     return href
 
+# Custom CSS styles
 st.markdown(
     """
     <style>
@@ -56,18 +57,15 @@ st.markdown(
         text-align: center;
         padding: 10px;
         font-size: 16px;
-        color:  #FFFFFF;
+        color: #FFFFFF;
     }
-
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-
-
+# Sidebar HTML
 sidebar_div_html = """
-
 <div style='
     background-color: #FFFFFF;
     padding: 20px;
@@ -92,19 +90,19 @@ sidebar_div_html = """
     <h3 style='margin-bottom: 10px; color: #333; font-size: 16px;'>
     Select the task you want
     </h3>
-    </div>
-
+</div>
 """
 
-# Render the HTML in Streamlit
+# Render the sidebar HTML
 st.sidebar.markdown(sidebar_div_html, unsafe_allow_html=True)
+
+# Main content
+st.title("Article Summarizer and Translator")
 
 summary_type = st.sidebar.radio(" ", ["Summarization", "Translation"])
 
-
-
+# Summarization section
 if summary_type == "Summarization":
-
     st.title("Article Summarizer")
 
     # Load the summarization pipeline
@@ -136,61 +134,52 @@ if summary_type == "Summarization":
                     st.error(str(e))
 
     elif summary_type == "URL":
-    url = st.text_input("Enter URL to summarize:")
-    if st.button("Fetch and Summarize"):
-        if url and url.startswith(("http://", "https://")):
-            try:
-                article = Article(url)
-                st.write("Downloading article...")
-                article.download()
-                st.write("Parsing article...")
-                article.parse()
-                input_text = article.text
-                query = input_text
-                with st.spinner('Summarizing...'):
-                    pipe_out = pipe(query, max_length=max_length, min_length=min_length)
-                summary = pipe_out[0]["summary_text"]
-                st.write("Summary:")
-                st.write(summary)
+        url = st.text_input("Enter URL to summarize:")
+        if st.button("Fetch and Summarize"):
+            if url and url.startswith(("http://", "https://")):
+                try:
+                    article = Article(url)
+                    st.write("Downloading article...")
+                    article.download()
+                    st.write("Parsing article...")
+                    article.parse()
+                    input_text = article.text
+                    query = input_text
+                    with st.spinner('Summarizing...'):
+                        pipe_out = pipe(query, max_length=max_length, min_length=min_length)
+                    summary = pipe_out[0]["summary_text"]
+                    st.write("Summary:")
+                    st.write(summary)
 
-                pdf_file = convert_to_pdf(summary)
-                text_file = convert_to_text(summary)
-                st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
-                st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
+                    pdf_file = convert_to_pdf(summary)
+                    text_file = convert_to_text(summary)
+                    st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
+                    st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
 
-            except ArticleException as e:
-                st.error("Error fetching or summarizing the article. It might be protected against scraping or is not valid. Please try another URL.")
-                st.error(str(e))
-            except Exception as e:
-                st.error("An error occurred during summarization. Please try again later.")
-                st.error(str(e))
-        else:
-            st.warning("Please enter a valid URL (starting with http:// or https://).")
+                except Exception as e:
+                    st.error("Error fetching or summarizing the article. Please try again.")
+                    st.error(str(e))
+            else:
+                st.warning("Please enter a valid URL (starting with http:// or https://).")
 
-
-if summary_type == "Translation":
+# Translation section
+elif summary_type == "Translation":
     st.title("Text Translator")
-    source_lang = st.selectbox(
-        'Select the source language',
-        ['en', 'fr', 'hi']
-    )
-    target_lang = st.selectbox(
-        'Select the target language',
-        ['en','fr', 'hi']
-    )
 
-    if ( source_lang == 'en' and target_lang == 'fr'):
-        model_name = "Helsinki-NLP/opus-mt-en-fr"
-    elif ( source_lang == 'en' and target_lang == 'hi'):
-        model_name = "Helsinki-NLP/opus-mt-en-hi"
-    elif ( source_lang == 'fr' and target_lang == 'en'):
-        model_name = "Helsinki-NLP/opus-mt-fr-en"
-    elif ( source_lang == 'hi' and target_lang == 'en'):
-        model_name = "Helsinki-NLP/opus-mt-hi-en"
-    elif ( source_lang == 'hi' and target_lang == 'fr'):
-        model_name = "Helsinki-NLP/opus-mt-hi-fr"
-    elif ( source_lang == 'fr' and target_lang == 'hi'):
-        model_name = "Helsinki-NLP/opus-mt-fr-hi"
+    source_lang = st.selectbox('Select the source language', ['en', 'fr', 'hi'])
+    target_lang = st.selectbox('Select the target language', ['en', 'fr', 'hi'])
+
+    model_map = {
+        ('en', 'fr'): "Helsinki-NLP/opus-mt-en-fr",
+        ('en', 'hi'): "Helsinki-NLP/opus-mt-en-hi",
+        ('fr', 'en'): "Helsinki-NLP/opus-mt-fr-en",
+        ('hi', 'en'): "Helsinki-NLP/opus-mt-hi-en",
+        ('hi', 'fr'): "Helsinki-NLP/opus-mt-hi-fr",
+        ('fr', 'hi'): "Helsinki-NLP/opus-mt-fr-hi"
+    }
+
+    if (source_lang, target_lang) in model_map:
+        model_name = model_map[(source_lang, target_lang)]
     else:
         model_name = "Helsinki-NLP/opus-mt-en-hi"
 
@@ -222,7 +211,7 @@ if summary_type == "Translation":
                 st.error("Error translating the text. Please try again.")
                 st.error(str(e))
 
-# Footer content with name
+# Footer
 st.markdown(
     """
     <div class="custom-footer">
