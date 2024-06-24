@@ -62,10 +62,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
-
 sidebar_div_html = """
-
 <div style='
     background-color: #FFFFFF;
     padding: 20px;
@@ -90,29 +87,25 @@ sidebar_div_html = """
     <h3 style='margin-bottom: 10px; color: #333; font-size: 16px;'>
     Select the task you want
     </h3>
-    </div>
-
+</div>
 """
 
 # Render the HTML in Streamlit
 st.sidebar.markdown(sidebar_div_html, unsafe_allow_html=True)
 
-summary_type = st.sidebar.radio(" ", ["Summarization", "Translation"])
+task = st.sidebar.radio("Choose Task:", ["Summarization", "Translation"])
 
-
-
-if summary_type == "Summarization":
-
+if task == "Summarization":
     st.title("Article Summarizer")
 
     # Load the summarization pipeline
     pipe = pipeline("summarization", model="t5-small")
 
-    summary_type = st.radio("Summarize from:", ["Text Input", "URL"])
+    summary_input_type = st.radio("Summarize from:", ["Text Input", "URL"])
     max_length = st.slider("Maximum Summary Length:", min_value=50, max_value=500, value=300)
     min_length = st.slider("Minimum Summary Length:", min_value=30, max_value=300, value=100)
 
-    if summary_type == "Text Input":
+    if summary_input_type == "Text Input":
         input_text = st.text_area("Enter text to summarize:", height=150)
         if st.button("Summarize"):
             if input_text:
@@ -133,7 +126,7 @@ if summary_type == "Summarization":
                     st.error("Error summarizing the text. Please try again.")
                     st.error(str(e))
 
-    elif summary_type == "URL":
+    elif summary_input_type == "URL":
         url = st.text_input("Enter URL to summarize:")
         if st.button("Fetch and Summarize"):
             if url and url.startswith(("http://", "https://")):
@@ -160,7 +153,7 @@ if summary_type == "Summarization":
             else:
                 st.warning("Please enter a valid URL (starting with http:// or https://).")
 
-if summary_type == "Translation":
+if task == "Translation":
     st.title("Text Translator")
     source_lang = st.selectbox(
         'Select the source language',
@@ -218,7 +211,7 @@ if summary_type == "Translation":
 st.markdown(
     """
     <div class="custom-footer">
-        @created by Pratush
+        @created by Vaishnavi
     </div>
     """,
     unsafe_allow_html=True,
