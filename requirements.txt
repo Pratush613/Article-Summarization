@@ -1,4 +1,4 @@
-streamlit==1.14.0
+streamlit==1.35.0
 transformers==4.24.0
 fpdf==1.7.2
 newspaper3k==0.2.8
@@ -9,4 +9,4 @@ click==8.0.0
 protobuf<4
 numpy<2
 lxml-html-clean==0.1.1
-sentencepiece
+
