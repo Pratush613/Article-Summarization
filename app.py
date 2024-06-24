@@ -1,6 +1,6 @@
 import streamlit as st
 from transformers import pipeline
-from newspaper import Article
+from newspaper3k import Article
 from fpdf import FPDF, HTMLMixin
 import base64
 import sentencepiece
@@ -117,10 +117,10 @@ if summary_type == "Summarization":
         input_text = st.text_area("Enter text to summarize:", height=150)
         if st.button("Summarize"):
             if input_text:
-                query = input_text
+                query = input_text + "\nTL;DR:\n"
                 try:
                     with st.spinner('Summarizing...'):
-                        pipe_out = pipe(query, max_length=max_length, min_length=min_length)
+                        pipe_out = pipe(query, max_length=max_length, min_length=min_length,clean_up_tokenization_spaces=True)
                     summary = pipe_out[0]["summary_text"]
                     st.write("Summary:")
                     st.write(summary)
@@ -145,9 +145,9 @@ if summary_type == "Summarization":
                     st.write("Parsing article...")
                     article.parse()
                     input_text = article.text
-                    query = input_text
+                    query = input_text + "\nTL;DR:\n"
                     with st.spinner('Summarizing...'):
-                        pipe_out = pipe(query, max_length=max_length, min_length=min_length)
+                        pipe_out = pipe(query, max_length=max_length, min_length=min_length,clean_up_tokenization_spaces=True)
                     summary = pipe_out[0]["summary_text"]
                     st.write("Summary:")
                     st.write(summary)
