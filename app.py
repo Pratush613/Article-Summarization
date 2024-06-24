@@ -4,7 +4,7 @@ from newspaper import Article
 from fpdf import FPDF, HTMLMixin
 import base64
 import lxml_html_clean as clean
-
+import sentencepiece
 
 class MyFPDF(FPDF, HTMLMixin):
     pass
