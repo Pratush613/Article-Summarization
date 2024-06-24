@@ -3,8 +3,6 @@ from transformers import pipeline
 from newspaper import Article
 from fpdf import FPDF, HTMLMixin
 import base64
-import lxml_html_clean as clean
-import sentencepiece
 
 class MyFPDF(FPDF, HTMLMixin):
     pass
@@ -129,7 +127,7 @@ if task == "Summarization":
     elif summary_input_type == "URL":
         url = st.text_input("Enter URL to summarize:")
         if st.button("Fetch and Summarize"):
-            if url and url.startswith(("http://", "https://")):
+            if url and (url.startswith("http://") or url.startswith("https://")):
                 try:
                     article = Article(url)
                     article.download()
@@ -145,74 +143,4 @@ if task == "Summarization":
                     pdf_file = convert_to_pdf(summary)
                     text_file = convert_to_text(summary)
                     st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
-                    st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
-
-                except Exception as e:
-                    st.error("Error fetching or summarizing the article. It might be protected against scraping or is not valid. Please try another URL.")
-                    st.error(str(e))
-            else:
-                st.warning("Please enter a valid URL (starting with http:// or https://).")
-
-if task == "Translation":
-    st.title("Text Translator")
-    source_lang = st.selectbox(
-        'Select the source language',
-        ['en', 'fr', 'hi']
-    )
-    target_lang = st.selectbox(
-        'Select the target language',
-        ['en','fr', 'hi']
-    )
-
-    if ( source_lang == 'en' and target_lang == 'fr'):
-        model_name = "Helsinki-NLP/opus-mt-en-fr"
-    elif ( source_lang == 'en' and target_lang == 'hi'):
-        model_name = "Helsinki-NLP/opus-mt-en-hi"
-    elif ( source_lang == 'fr' and target_lang == 'en'):
-        model_name = "Helsinki-NLP/opus-mt-fr-en"
-    elif ( source_lang == 'hi' and target_lang == 'en'):
-        model_name = "Helsinki-NLP/opus-mt-hi-en"
-    elif ( source_lang == 'hi' and target_lang == 'fr'):
-        model_name = "Helsinki-NLP/opus-mt-hi-fr"
-    elif ( source_lang == 'fr' and target_lang == 'hi'):
-        model_name = "Helsinki-NLP/opus-mt-fr-hi"
-    else:
-        model_name = "Helsinki-NLP/opus-mt-en-hi"
-
-    st.write("Source Language:", source_lang)
-    st.write("Target Language:", target_lang)
-
-    # Load the translation pipeline
-    try:
-        translator = pipeline("translation", model=model_name, framework="pt")
-    except Exception as e:
-        st.error(f"Error loading translation model: {str(e)}")
-        st.stop()
-
-    input_text = st.text_area("Enter text to translate:", height=150)
-    if st.button("Translate"):
-        if input_text:
-            try:
-                with st.spinner('Translating...'):
-                    translation = translator(input_text)[0]["translation_text"]
-                st.write("Translation:")
-                st.write(translation)
-
-                pdf_file = convert_to_pdf(translation)
-                text_file = convert_to_text(translation)
-                st.markdown(get_binary_file_downloader_html(pdf_file, "Translation as PDF"), unsafe_allow_html=True)
-                st.markdown(get_binary_file_downloader_html(text_file, "Translation as Text"), unsafe_allow_html=True)
-
-            except Exception as e:
-                st.error("Error translating the text. Please try again.")
-                st.error(str(e))
-
-# Footer content with name
-st.markdown(
-    """
-    <div class="custom-footer">
-        @created by Vaishnavi
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+                    st.markdown(get_binary_file_downloader_html(text_file, "Summary as T
