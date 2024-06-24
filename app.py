@@ -115,10 +115,13 @@ if summary_type == "Summarization":
     min_length = st.slider("Minimum Summary Length:", min_value=30, max_value=300, value=100)
 
     if summary_type == "Text Input":
+        max_sequence_length = 512
         input_text = st.text_area("Enter text to summarize:", height=150)
         if st.button("Summarize"):
             if input_text:
-                query = input_text + "\nTL;DR:\n"
+                truncated_text = input_text[:max_sequence_length]
+                query = truncated_text
+                 
                 try:
                     with st.spinner('Summarizing...'):
                         pipe_out = pipe(query, max_length=max_length, min_length=min_length,clean_up_tokenization_spaces=True)
