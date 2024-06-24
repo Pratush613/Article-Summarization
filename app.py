@@ -220,7 +220,7 @@ if summary_type == "Translation":
 st.markdown(
     """
     <div class="custom-footer">
-        @created by Pratush
+        @created by Vaishnavi
     </div>
     """,
     unsafe_allow_html=True,
