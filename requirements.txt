@@ -4,7 +4,7 @@ fpdf==1.7.2
 newspaper3k==0.2.8
 lxml==5.2.2
 torch==2.0.1
-altair==4.2.2
+altair==4.*
 click==8.0.0
 protobuf<4
 numpy<2
