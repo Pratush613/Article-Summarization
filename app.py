@@ -71,7 +71,7 @@ summary_type = st.sidebar.radio("Choose the task ", ["Summarization", "Translati
 if summary_type == "Summarization":
     st.title("Article Summarizer")
 
-    pipe = load_summarization_model()
+    pipe = pipeline("summarization",model="t5-small")
 
     summary_type = st.radio("Summarize from:", ["Text Input", "URL"])
     max_length = st.slider("Maximum Summary Length:", min_value=50, max_value=500, value=300)
@@ -144,7 +144,7 @@ elif summary_type == "Translation":
     st.write("Source Language:", source_lang)
     st.write("Target Language:", target_lang)
 
-    translator = load_translation_model(model_name)
+    translator = pipeline("translation", model=model_name)
 
     input_text = st.text_area("Enter text to translate:", height=150)
     if st.button("Translate"):
