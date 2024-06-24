@@ -9,3 +9,4 @@ click==8.0.0
 protobuf<4
 numpy<2
 lxml-html-clean==0.1.1
+sentencepiece==0.1.96
