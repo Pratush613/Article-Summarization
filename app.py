@@ -65,6 +65,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Main content for sidebar
+st.sidebar.title("Article Summarizer and Translator")
+
 # Sidebar HTML
 sidebar_div_html = """
 <div style='
@@ -98,7 +101,7 @@ sidebar_div_html = """
 st.sidebar.markdown(sidebar_div_html, unsafe_allow_html=True)
 
 # Main content
-st.title("Article Summarizer and Translator")
+st.sidebar.title("Article Summarizer and Translator")
 
 summary_type = st.sidebar.radio(" ", ["Summarization", "Translation"])
 
