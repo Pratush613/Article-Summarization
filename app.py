@@ -1,9 +1,12 @@
+
 import streamlit as st
 from transformers import pipeline
 from newspaper import Article
 from fpdf import FPDF, HTMLMixin
 import base64
 import sentencepiece
+import lxml_html_clean as clean
+
 
 class MyFPDF(FPDF, HTMLMixin):
     pass
@@ -61,7 +64,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+
 sidebar_div_html = """
+
 <div style='
     background-color: #FFFFFF;
     padding: 20px;
@@ -86,25 +92,29 @@ sidebar_div_html = """
     <h3 style='margin-bottom: 10px; color: #333; font-size: 16px;'>
     Select the task you want
     </h3>
-</div>
+    </div>
+
 """
 
 # Render the HTML in Streamlit
 st.sidebar.markdown(sidebar_div_html, unsafe_allow_html=True)
 
-task = st.sidebar.radio("Choose Task:", ["Summarization", "Translation"])
+summary_type = st.sidebar.radio(" ", ["Summarization", "Translation"])
 
-if task == "Summarization":
+
+
+if summary_type == "Summarization":
+
     st.title("Article Summarizer")
 
     # Load the summarization pipeline
     pipe = pipeline("summarization", model="t5-small")
 
-    summary_input_type = st.radio("Summarize from:", ["Text Input", "URL"])
+    summary_type = st.radio("Summarize from:", ["Text Input", "URL"])
     max_length = st.slider("Maximum Summary Length:", min_value=50, max_value=500, value=300)
     min_length = st.slider("Minimum Summary Length:", min_value=30, max_value=300, value=100)
 
-    if summary_input_type == "Text Input":
+    if summary_type == "Text Input":
         input_text = st.text_area("Enter text to summarize:", height=150)
         if st.button("Summarize"):
             if input_text:
@@ -125,10 +135,10 @@ if task == "Summarization":
                     st.error("Error summarizing the text. Please try again.")
                     st.error(str(e))
 
-    elif summary_input_type == "URL":
+    elif summary_type == "URL":
         url = st.text_input("Enter URL to summarize:")
         if st.button("Fetch and Summarize"):
-            if url and (url.startswith("http://") or url.startswith("https://")):
+            if url and url.startswith(("http://", "https://")):
                 try:
                     article = Article(url)
                     article.download()
@@ -144,4 +154,74 @@ if task == "Summarization":
                     pdf_file = convert_to_pdf(summary)
                     text_file = convert_to_text(summary)
                     st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
-                    st.markdown(get_binary_file_downloader_html(text_file, "Summary as T
+                    st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
+
+                except Exception as e:
+                    st.error("Error fetching or summarizing the article. It might be protected against scraping or is not valid. Please try another URL.")
+                    st.error(str(e))
+            else:
+                st.warning("Please enter a valid URL (starting with http:// or https://).")
+
+if summary_type == "Translation":
+    st.title("Text Translator")
+    source_lang = st.selectbox(
+        'Select the source language',
+        ['en', 'fr', 'hi']
+    )
+    target_lang = st.selectbox(
+        'Select the target language',
+        ['en','fr', 'hi']
+    )
+
+    if ( source_lang == 'en' and target_lang == 'fr'):
+        model_name = "Helsinki-NLP/opus-mt-en-fr"
+    elif ( source_lang == 'en' and target_lang == 'hi'):
+        model_name = "Helsinki-NLP/opus-mt-en-hi"
+    elif ( source_lang == 'fr' and target_lang == 'en'):
+        model_name = "Helsinki-NLP/opus-mt-fr-en"
+    elif ( source_lang == 'hi' and target_lang == 'en'):
+        model_name = "Helsinki-NLP/opus-mt-hi-en"
+    elif ( source_lang == 'hi' and target_lang == 'fr'):
+        model_name = "Helsinki-NLP/opus-mt-hi-fr"
+    elif ( source_lang == 'fr' and target_lang == 'hi'):
+        model_name = "Helsinki-NLP/opus-mt-fr-hi"
+    else:
+        model_name = "Helsinki-NLP/opus-mt-en-hi"
+
+    st.write("Source Language:", source_lang)
+    st.write("Target Language:", target_lang)
+
+    # Load the translation pipeline
+    try:
+        translator = pipeline("translation", model=model_name, framework="pt")
+    except Exception as e:
+        st.error(f"Error loading translation model: {str(e)}")
+        st.stop()
+
+    input_text = st.text_area("Enter text to translate:", height=150)
+    if st.button("Translate"):
+        if input_text:
+            try:
+                with st.spinner('Translating...'):
+                    translation = translator(input_text)[0]["translation_text"]
+                st.write("Translation:")
+                st.write(translation)
+
+                pdf_file = convert_to_pdf(translation)
+                text_file = convert_to_text(translation)
+                st.markdown(get_binary_file_downloader_html(pdf_file, "Translation as PDF"), unsafe_allow_html=True)
+                st.markdown(get_binary_file_downloader_html(text_file, "Translation as Text"), unsafe_allow_html=True)
+
+            except Exception as e:
+                st.error("Error translating the text. Please try again.")
+                st.error(str(e))
+
+# Footer content with name
+st.markdown(
+    """
+    <div class="custom-footer">
+        @created by Pratush
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
