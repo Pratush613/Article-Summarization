@@ -3,23 +3,27 @@ from transformers import pipeline
 from newspaper import Article
 from fpdf import FPDF, HTMLMixin
 import base64
-import sentencepiece
 
 # Custom PDF class
 class MyFPDF(FPDF, HTMLMixin):
     pass
+
+@st.cache_data
+def load_summarization_model():
+    return pipeline("summarization", model="t5-small")
+
+@st.cache_data
+def load_translation_model(model_name):
+    return pipeline("translation", model=model_name, framework="pt")
 
 # Function to convert text to PDF
 def convert_to_pdf(text):
     pdf = MyFPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-
-    # Split text into lines to add to PDF
     lines = text.split('\n')
     for line in lines:
         pdf.multi_cell(0, 10, line.encode('latin-1', 'replace').decode('latin-1'))
-
     pdf_output = "output.pdf"
     pdf.output(pdf_output)
     return pdf_output
@@ -65,104 +69,57 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Main content for sidebar
+# Sidebar content
 st.sidebar.title("Article Summarizer and Translator")
-
-# Sidebar HTML
-sidebar_div_html = """
-<div style='
-    background-color: #FFFFFF;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    text-align: center;
-'>
-    <h2 style='margin-bottom: 10px; color: #000000; font-size: 20px;'>
-        Navigation Panel
-    </h2>
-</div>
-
-<div style='
-    background-color: #FFFFFF;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    text-align: center;
-'>
-    <h3 style='margin-bottom: 10px; color: #333; font-size: 16px;'>
-    Select the task you want
-    </h3>
-</div>
-"""
-
-# Render the sidebar HTML
-st.sidebar.markdown(sidebar_div_html, unsafe_allow_html=True)
-
-
-summary_type = st.sidebar.radio(" ", ["Summarization", "Translation"])
+summary_type = st.sidebar.radio("Choose the task ", ["Summarization", "Translation"])
 
 # Summarization section
 if summary_type == "Summarization":
     st.title("Article Summarizer")
 
-    # Load the summarization pipeline
-    pipe = pipeline("summarization", model="t5-small")
+    pipe = load_summarization_model()
 
     summary_type = st.radio("Summarize from:", ["Text Input", "URL"])
     max_length = st.slider("Maximum Summary Length:", min_value=50, max_value=500, value=300)
     min_length = st.slider("Minimum Summary Length:", min_value=30, max_value=300, value=100)
 
     if summary_type == "Text Input":
-        max_sequence_length = 512
         input_text = st.text_area("Enter text to summarize:", height=150)
         if st.button("Summarize"):
             if input_text:
-                truncated_text = input_text[:max_sequence_length]
-                query = truncated_text
-                 
+                truncated_text = input_text[:512]
                 try:
                     with st.spinner('Summarizing...'):
-                        pipe_out = pipe(query, max_length=max_length, min_length=min_length,clean_up_tokenization_spaces=True)
+                        pipe_out = pipe(truncated_text, max_length=max_length, min_length=min_length, clean_up_tokenization_spaces=True)
                     summary = pipe_out[0]["summary_text"]
                     st.write("Summary:")
                     st.write(summary)
-
                     pdf_file = convert_to_pdf(summary)
                     text_file = convert_to_text(summary)
                     st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
                     st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
-
                 except Exception as e:
                     st.error("Error summarizing the text. Please try again.")
                     st.error(str(e))
 
     elif summary_type == "URL":
-        max_sequence_length = 512
         url = st.text_input("Enter URL to summarize:")
         if st.button("Fetch and Summarize"):
             if url and url.startswith(("http://", "https://")):
                 try:
                     article = Article(url)
-                    st.write("Downloading article...")
                     article.download()
-                    st.write("Parsing article...")
                     article.parse()
-                    input_text = article.text
-                    truncated_text = input_text[:max_sequence_length]
-                    query = truncated_text 
+                    input_text = article.text[:512]
                     with st.spinner('Summarizing...'):
-                        pipe_out = pipe(query, max_length=max_length, min_length=min_length,clean_up_tokenization_spaces=True)
+                        pipe_out = pipe(input_text, max_length=max_length, min_length=min_length, clean_up_tokenization_spaces=True)
                     summary = pipe_out[0]["summary_text"]
                     st.write("Summary:")
                     st.write(summary)
-
                     pdf_file = convert_to_pdf(summary)
                     text_file = convert_to_text(summary)
                     st.markdown(get_binary_file_downloader_html(pdf_file, "Summary as PDF"), unsafe_allow_html=True)
                     st.markdown(get_binary_file_downloader_html(text_file, "Summary as Text"), unsafe_allow_html=True)
-
                 except Exception as e:
                     st.error("Error fetching or summarizing the article. Please try again.")
                     st.error(str(e))
@@ -193,12 +150,7 @@ elif summary_type == "Translation":
     st.write("Source Language:", source_lang)
     st.write("Target Language:", target_lang)
 
-    # Load the translation pipeline
-    try:
-        translator = pipeline("translation", model=model_name, framework="pt")
-    except Exception as e:
-        st.error(f"Error loading translation model: {str(e)}")
-        st.stop()
+    translator = load_translation_model(model_name)
 
     input_text = st.text_area("Enter text to translate:", height=150)
     if st.button("Translate"):
@@ -208,12 +160,10 @@ elif summary_type == "Translation":
                     translation = translator(input_text)[0]["translation_text"]
                 st.write("Translation:")
                 st.write(translation)
-
                 pdf_file = convert_to_pdf(translation)
                 text_file = convert_to_text(translation)
                 st.markdown(get_binary_file_downloader_html(pdf_file, "Translation as PDF"), unsafe_allow_html=True)
                 st.markdown(get_binary_file_downloader_html(text_file, "Translation as Text"), unsafe_allow_html=True)
-
             except Exception as e:
                 st.error("Error translating the text. Please try again.")
                 st.error(str(e))
