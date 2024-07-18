@@ -166,7 +166,7 @@ elif summary_type == "Translation":
 st.markdown(
     """
     <div class="custom-footer">
-        @created by Vaishnavi
+        @created by Pratush
     </div>
     """,
     unsafe_allow_html=True,
